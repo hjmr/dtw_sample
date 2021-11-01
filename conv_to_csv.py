@@ -4,15 +4,13 @@ import argparse
 import glob
 
 import numpy as np
-import dtw
 import h5py
 
 DEFAULT_PATH = "98:D3:51:FD:97:15/raw/channel_1"
 
 
 def parse_arg():
-    args = argparse.ArgumentParser(description="Apply DTW.")
-    args.add_argument("-r", "--reference", type=str, nargs=1, help="The reference file.")
+    args = argparse.ArgumentParser(description="Convert to CSV.")
     args.add_argument("-p", "--path", type=str, help="A data path in HDF5.")
     args.add_argument("-d", "--dst_dir", type=str, nargs=1, help="A destination directory.")
     args.add_argument("-s", "--src_dir", type=str, nargs=1, help="A directory contains source files.")
@@ -25,12 +23,6 @@ def get_data(hdf5_file, data_path):
         if data_path in h5.keys():
             data = np.array(h5[data_path]).T
     return data[0]
-
-
-def dtw_one(reference, src_data):
-    alignment = dtw.dtw(src_data, reference)
-    warp_idx = dtw.warp(alignment)
-    return src_data[warp_idx]
 
 
 def get_destination(src_file, src_root, dst_root):
@@ -53,18 +45,12 @@ def save_in_CSV(csv_file, data):
 def dtw_dir(reference, src_root, dst_root, data_path):
     src_files = glob.glob("{}/**/*.h5".format(src_root), recursive=True)
     for src_file in src_files:
-        print("{} > ".format(src_file), end="", flush=True)
-        print("read > ", end="", flush=True)
         src_data = get_data(src_file, data_path)
-        print("DTW > ", end="", flush=True)
-        dtwed_data = dtw_one(reference, src_data)
         dst_dir, dst_filename = get_destination(src_file, src_root, dst_root)
         if not os.path.exists(dst_dir):
             os.makedirs(dst_dir)
         dst_file = "{}/{}".format(dst_dir, dst_filename)
-        print("saving to {} > ".format(dst_file), end="", flush=True)
-        save_in_CSV(dst_file, dtwed_data)
-        print("done.")
+        save_in_CSV(dst_file, src_data)
 
 
 if __name__ == "__main__":
