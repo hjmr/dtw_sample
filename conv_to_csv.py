@@ -42,7 +42,7 @@ def save_in_CSV(csv_file, data):
     np.savetxt(csv_file, data, delimiter=",", fmt="%d")
 
 
-def dtw_dir(reference, src_root, dst_root, data_path):
+def to_csv_dir(src_root, dst_root, data_path):
     src_files = glob.glob("{}/**/*.h5".format(src_root), recursive=True)
     for src_file in src_files:
         src_data = get_data(src_file, data_path)
@@ -56,5 +56,4 @@ def dtw_dir(reference, src_root, dst_root, data_path):
 if __name__ == "__main__":
     args = parse_arg()
     data_path = args.path if args.path is not None else DEFAULT_PATH
-    reference = get_data(args.reference[0], data_path)
-    dtw_dir(reference, args.src_dir[0], args.dst_dir[0], data_path)
+    to_csv_dir(args.src_dir[0], args.dst_dir[0], data_path)
