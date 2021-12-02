@@ -24,7 +24,7 @@ def get_data(hdf5_file, device, channels):
         for c in channels:
             data_path = "{}/raw/channel_{}".format(device, c)
             if data_path in h5.keys():
-                if data == None:
+                if data is None:
                     data = np.array(h5[data_path]).T
                 else:
                     data = np.append(data, np.array(h5[data_path]).T, axis=0)
