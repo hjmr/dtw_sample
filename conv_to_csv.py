@@ -15,19 +15,25 @@ def parse_arg():
     args.add_argument("-c", "--channels", type=int, nargs="+", help="Channes.")
     args.add_argument("-f", "--from_dir", type=str, nargs=1, help="A destination directory.")
     args.add_argument("-t", "--to_dir", type=str, nargs=1, help="A directory contains source files.")
+    args.add_argument("-g", "--ground_channel", type=int, default=6, help="Specify ground channel.")
     return args.parse_args()
 
 
-def get_data(hdf5_file, device, channels):
+def get_data(hdf5_file, device, channels, ground_channel):
     data = None
     with h5py.File(hdf5_file, "r") as h5:
+        ground_path = "{}/raw/channel_{}".format(device, ground_channel)
+        ground_data = np.array(h5[ground_path]).T if ground_path in h5.keys() else None
         for c in channels:
             data_path = "{}/raw/channel_{}".format(device, c)
             if data_path in h5.keys():
+                d = np.array(h5[data_path]).T
+                if ground_data is not None:
+                    d -= ground_data
                 if data is None:
-                    data = np.array(h5[data_path]).T
+                    data = d
                 else:
-                    data = np.append(data, np.array(h5[data_path]).T, axis=0)
+                    data = np.append(data, d, axis=0)
     return data
 
 
@@ -48,10 +54,10 @@ def save_in_CSV(csv_file, data):
     np.savetxt(csv_file, data, delimiter=",", fmt="%d")
 
 
-def to_csv_dir(src_root, dst_root, device, channels):
+def to_csv_dir(src_root, dst_root, device, channels, ground_channel):
     src_files = glob.glob("{}/**/*.h5".format(src_root), recursive=True)
     for src_file in src_files:
-        src_data = get_data(src_file, device, channels)
+        src_data = get_data(src_file, device, channels, ground_channel)
         dst_dir, dst_filename = get_destination(src_file, src_root, dst_root)
         if not os.path.exists(dst_dir):
             os.makedirs(dst_dir)
@@ -61,4 +67,4 @@ def to_csv_dir(src_root, dst_root, device, channels):
 
 if __name__ == "__main__":
     args = parse_arg()
-    to_csv_dir(args.from_dir[0], args.to_dir[0], args.device, args.channels)
+    to_csv_dir(args.from_dir[0], args.to_dir[0], args.device, args.channels, args.ground_channel)
